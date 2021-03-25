@@ -43,7 +43,7 @@ $ npm install rn-vertical-slider-gradient
           showBallIndicator
           ballIndicatorTextColor={"white"}
         />
-```
+==================================================        
 Updated one for how to use is 
 <VerticalSlider
           value={currentValue}
@@ -65,7 +65,9 @@ Updated one for how to use is
           ballIndicatorColor={yellow}
           scaleColor={yellow}
           />
-===============
+        
+```
+
 ## Props
 
 |Property|Type|Default|Description|

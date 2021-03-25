@@ -33,6 +33,7 @@ type Props = {
   unitSymbol: string,
   scaleColor: string,
   scaleWidth: number,
+  scaleLeft: number
 };
 
 
@@ -43,7 +44,7 @@ type State = {
   panResponder: any
 };
 
-export default class VerticalScroller extends Component<Props, State> {
+  export default class VerticalScroller extends Component<Props, State> {
   _moveStartValue = null;
   arrScaleItems = [];
 
@@ -195,7 +196,8 @@ export default class VerticalScroller extends Component<Props, State> {
       ballIndicatorTextColor,
       unitSymbol,
       scaleColor,
-      scaleWidth
+      scaleWidth,
+      scaleLeft
     } = this.props;
 
     const C_HEIGHT = height - ((Platform.OS === 'ios') ? 26 : 28);
@@ -215,7 +217,7 @@ export default class VerticalScroller extends Component<Props, State> {
           {
             this._getScale()
           }
-          <View style={{width: scaleWidth, left: 100, top: (height / 2 - (this.state.value * (height / max)))}}>
+          <View style={{width: scaleWidth, left: scaleLeft, top: (height / 2 - (this.state.value * (height / max)))}}>
             {
               this.arrScaleItems.map((item, key) => {
                 return (<View

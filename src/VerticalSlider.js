@@ -32,6 +32,8 @@ type Props = {
   ballIndicatorTextColor?: string,
   unitSymbol: string,
   scaleColor: string,
+  scaleWidth: number,
+  scaleLeft: number
 };
 
 
@@ -42,7 +44,7 @@ type State = {
   panResponder: any
 };
 
-export default class VerticalSlider extends Component<Props, State> {
+  export default class VerticalScroller extends Component<Props, State> {
   _moveStartValue = null;
   arrScaleItems = [];
 
@@ -102,7 +104,7 @@ export default class VerticalSlider extends Component<Props, State> {
     return (
       <View style={{marginTop: 0, marginHorizontal: 0}}>
         <View style={{position: 'relative'}}>
-          <View style={{position: 'absolute', top: -15, left: -35}}>
+          <View style={{position: 'absolute', top: -19, left: -40}}>
             <View
               style={
                 {borderBottomWidth: 0,
@@ -193,7 +195,9 @@ export default class VerticalSlider extends Component<Props, State> {
       ballIndicatorPosition,
       ballIndicatorTextColor,
       unitSymbol,
-      scaleColor
+      scaleColor,
+      scaleWidth,
+      scaleLeft
     } = this.props;
 
     const C_HEIGHT = height - ((Platform.OS === 'ios') ? 26 : 28);
@@ -213,30 +217,32 @@ export default class VerticalSlider extends Component<Props, State> {
           {
             this._getScale()
           }
-          {
-            this.arrScaleItems.map((item, key) => {
-              return (<View
-                style={[styles.scaleItem, {
-                  backgroundColor: scaleColor,
-                  borderWidth: 2,
-                  borderRadius: 2,
-                  borderColor: scaleColor,
-                  position: 'absolute',
-                  top: key * (height / max),
-                  width: key % 5 ? '40%' : '50%'}]}
-                key={key} />);
-            })
-          }
+          <View style={{width: scaleWidth, left: scaleLeft, top: (height / 2 - (this.state.value * (height / max)))}}>
+            {
+              this.arrScaleItems.map((item, key) => {
+                return (<View
+                  style={[styles.scaleItem, {
+                    backgroundColor: scaleColor,
+                    borderWidth: 1,
+                    borderRadius: 2,
+                    borderColor: scaleColor,
+                    position: 'absolute',
+                    top: key * (height / max),
+                    width: key % 5 ? '80%' : '100%'}]}
+                  key={key} />);
+              })
+            }
+          </View>
         </View>
         {showBallIndicator && (
           <Animated.View
             style={[
               styles.ball,
               {
-                top: C_HEIGHT - (this.state.value * (height / max)),
-                width: ballIndicatorWidth ? ballIndicatorWidth : 60,
+                top: C_HEIGHT / 2, // C_HEIGHT - (this.state.value * (height / max)),
+                width: ballIndicatorWidth ? ballIndicatorWidth : 70,
                 height: 30,
-                borderRadius: 5,
+                borderRadius: 4,
                 bottom: this.state.ballHeight,
                 left: ballIndicatorPosition ? ballIndicatorPosition : width,
                 backgroundColor: ballIndicatorColor,
@@ -271,9 +277,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   ballText: {
-    fontWeight: '700',
     width: '100%',
-    textAlign: 'center'
+    textAlign: 'right',
+    fontFamily: 'Maven Pro',
+    fontSize: 18,
+    padding: 2
   },
   container: {
     overflow: 'hidden'

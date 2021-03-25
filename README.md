@@ -44,7 +44,28 @@ $ npm install rn-vertical-slider-gradient
           ballIndicatorTextColor={"white"}
         />
 ```
-
+Updated one for how to use is 
+<VerticalSlider
+          value={currentValue}
+          disabled={false}
+          min={0}
+          max={21}
+          onChange={onChangeValue}
+          onComplete={(value: number) => {
+            console.log('COMPLETE', value);
+          }}
+          width={100}
+          height={300}
+          step={1}
+          borderRadius={5}
+          ballIndicatorPosition={70}
+          showBallIndicator
+          ballIndicatorTextColor={black}
+          unitSymbol={'mm'}
+          ballIndicatorColor={yellow}
+          scaleColor={yellow}
+          />
+===============
 ## Props
 
 |Property|Type|Default|Description|

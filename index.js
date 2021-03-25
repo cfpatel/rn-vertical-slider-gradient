@@ -1,5 +1,3 @@
-// import VerticalSlider from "./src/VerticalSlider";
-import VerticalScroller from "./src/VerticalScroller";
+import VerticalSlider from "./src/VerticalSlider";
 
-export default VerticalScroller;
-// export {VerticalSlider};
+export default VerticalSlider;

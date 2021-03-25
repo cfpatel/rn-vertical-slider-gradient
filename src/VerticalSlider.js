@@ -3,16 +3,16 @@
  * @flow
  */
 
-import React, { Component } from "react";
+import React, {Component} from 'react';
 import {
   View,
   Text,
   Animated,
   PanResponder,
   StyleSheet,
-  Easing
-} from "react-native";
-import LinearGradient from "react-native-linear-gradient";
+  Easing,
+  Platform
+} from 'react-native';
 
 type Props = {
   value: number,
@@ -24,15 +24,16 @@ type Props = {
   width: number,
   height: number,
   borderRadius: number,
-  maximumTrackTintColor: string,
-  minimumTrackTintColor: Array<string>,
   showBallIndicator: boolean,
   step?: number,
   ballIndicatorColor?: string,
   ballIndicatorWidth?: number,
   ballIndicatorPosition?: number,
-  ballIndicatorTextColor?: string
+  ballIndicatorTextColor?: string,
+  unitSymbol: string,
+  scaleColor: string,
 };
+
 
 type State = {
   value: number,
@@ -43,11 +44,12 @@ type State = {
 
 export default class VerticalSlider extends Component<Props, State> {
   _moveStartValue = null;
+  arrScaleItems = [];
 
   constructor(props: Props) {
     super(props);
 
-    let panResponder = PanResponder.create({
+    const panResponder = PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => false,
       onPanResponderGrant: () => {
@@ -94,30 +96,60 @@ export default class VerticalSlider extends Component<Props, State> {
     };
   }
 
+  _renderArrow = () => {
+    const {ballIndicatorColor} = this.props;
+
+    return (
+      <View style={{marginTop: 0, marginHorizontal: 0}}>
+        <View style={{position: 'relative'}}>
+          <View style={{position: 'absolute', top: -15, left: -35}}>
+            <View
+              style={
+                {borderBottomWidth: 0,
+                  borderLeftWidth: 0,
+                  backgroundColor: ballIndicatorColor,
+                  width: 10,
+                  height: 10,
+                  transform: [{rotate: '45deg'}]}}
+            >
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  _getScale() {
+    this.arrScaleItems = [];
+    for (let cnt = this.props.min; cnt < this.props.max; cnt += this.props.step) {
+      this.arrScaleItems.push(cnt);
+    }
+  }
+
   _fetchNewValueFromGesture(gestureState: any): number {
-    const { min, max, step, height } = this.props;
+    const {min, max, step, height} = this.props;
     const ratio = -gestureState.dy / height;
     const diff = max - min;
     if (step) {
       return Math.max(
         min,
         Math.min(
-          max,
+          max - 1,
           this._moveStartValue + Math.round((ratio * diff) / step) * step
         )
       );
     }
-    let value = Math.max(min, this._moveStartValue + ratio * diff);
+    const value = Math.max(min, this._moveStartValue + ratio * diff);
     return Math.floor(value * 100) / 100;
   }
 
   _getSliderHeight(value: number): number {
-    const { min, max, height } = this.props;
+    const {min, max, height} = this.props;
     return ((value - min) * height) / (max - min);
   }
 
   _changeState(value: number): void {
-    const { height, ballIndicatorWidth } = this.props;
+    const {height, ballIndicatorWidth} = this.props;
     const sliderHeight = this._getSliderHeight(value);
     let ballPosition = sliderHeight;
     const ballHeight = (ballIndicatorWidth ? ballIndicatorWidth : 48) / 2;
@@ -126,51 +158,25 @@ export default class VerticalSlider extends Component<Props, State> {
     } else if (ballPosition - ballHeight <= 0) {
       ballPosition = 0;
     } else {
-      ballPosition = ballPosition - ballHeight;
+      ballPosition -= ballHeight;
     }
     Animated.parallel([
       Animated.timing(this.state.sliderHeight, {
         toValue: sliderHeight,
-        easing: Easing.linear
+        easing: Easing.linear,
+        useNativeDriver: true
       }),
       Animated.timing(this.state.ballHeight, {
         toValue: ballPosition,
-        easing: Easing.linear
+        easing: Easing.linear,
+        useNativeDriver: false
       })
     ]).start();
-    this.setState({ value });
-  }
-
-  _fetchBallIndicatorColor(): string {
-    const { value } = this.state;
-    const { max, min, ballIndicatorColor } = this.props;
-    if (ballIndicatorColor) {
-      return ballIndicatorColor;
-    }
-    const minimumTrackTintColor = this.props.minimumTrackTintColor
-      ? this.props.minimumTrackTintColor
-      : ["#000000"];
-    const colorLength = minimumTrackTintColor.length - 1;
-    const percentage = (value / (max - min)) * 100;
-    const divideValue = 100 / colorLength;
-    let colorIndex = Math.floor(percentage / divideValue);
-    // START FOR
-    // for (let iterateColor = 0; iterateColor < colorLength; iterateColor++) {
-    //   let startValue = iterateColor * divideValue;
-    //   let endValue = startValue + divideValue;
-    //   if (percentage > startValue && percentage < endValue) {
-    //     colorIndex = iterateColor;
-    //   }
-    // }
-    // END FOR
-    if (minimumTrackTintColor[colorIndex]) {
-      return minimumTrackTintColor[colorIndex];
-    }
-    return "#000000";
+    this.setState({value});
   }
 
   componentDidMount(): void {
-    const { value } = this.props;
+    const {value} = this.props;
     if (value) {
       this._changeState(value);
     }
@@ -178,71 +184,63 @@ export default class VerticalSlider extends Component<Props, State> {
 
   render() {
     const {
-      value,
-      disabled,
-      min,
       max,
-      onChange,
-      onComplete,
       width,
       height,
-      borderRadius,
-      maximumTrackTintColor,
-      minimumTrackTintColor,
       showBallIndicator,
       ballIndicatorColor,
       ballIndicatorWidth,
       ballIndicatorPosition,
-      ballIndicatorTextColor
+      ballIndicatorTextColor,
+      unitSymbol,
+      scaleColor
     } = this.props;
+
+    const C_HEIGHT = height - ((Platform.OS === 'ios') ? 26 : 28);
     return (
-      <View style={[{ height, width, borderRadius }]}>
+      <View style={[{height, width}]}>
         <View
           style={[
             styles.container,
-            styles.shadow,
             {
               height,
               width,
-              borderRadius,
-              backgroundColor: maximumTrackTintColor
-                ? maximumTrackTintColor
-                : "#ECECEC"
+              backgroundColor: 'transparent'
             }
           ]}
           {...this.state.panResponder.panHandlers}
         >
-          <Animated.View
-            style={[
-              styles.slider,
-              {
-                height: this.state.sliderHeight,
-                width
-              }
-            ]}
-          >
-            <LinearGradient
-              colors={
-                minimumTrackTintColor ? minimumTrackTintColor : ["#000000"]
-              }
-              start={{ x: 1.0, y: 1.0 }}
-              end={{ x: 0.0, y: 0.0 }}
-              style={styles.linearGradient}
-            />
-          </Animated.View>
+          {
+            this._getScale()
+          }
+          {
+            this.arrScaleItems.map((item, key) => {
+              return (<View
+                style={[styles.scaleItem, {
+                  backgroundColor: scaleColor,
+                  borderWidth: 2,
+                  borderRadius: 2,
+                  borderColor: scaleColor,
+                  position: 'absolute',
+                  top: key * (height / max),
+                  width: key % 5 ? '40%' : '50%'}]}
+                key={key} />);
+            })
+          }
         </View>
-        {this.props.showBallIndicator ? (
+        {showBallIndicator && (
           <Animated.View
             style={[
               styles.ball,
-              styles.shadow,
               {
-                width: ballIndicatorWidth ? ballIndicatorWidth : 48,
-                height: ballIndicatorWidth ? ballIndicatorWidth : 48,
-                borderRadius: ballIndicatorWidth ? ballIndicatorWidth / 2 : 24,
+                top: C_HEIGHT - (this.state.value * (height / max)),
+                width: ballIndicatorWidth ? ballIndicatorWidth : 60,
+                height: 30,
+                borderRadius: 5,
                 bottom: this.state.ballHeight,
-                left: ballIndicatorPosition ? ballIndicatorPosition : -60,
-                backgroundColor: this._fetchBallIndicatorColor()
+                left: ballIndicatorPosition ? ballIndicatorPosition : width,
+                backgroundColor: ballIndicatorColor,
+                textAlign: 'center'
               }
             ]}
           >
@@ -251,48 +249,41 @@ export default class VerticalSlider extends Component<Props, State> {
                 styles.ballText,
                 {
                   color: ballIndicatorTextColor
-                    ? ballIndicatorTextColor
-                    : "#000000"
                 }
               ]}
             >
-              {this.state.value}
+              {this.state.value + (unitSymbol && unitSymbol !== '' ? unitSymbol : '')}
             </Text>
+            {
+              this._renderArrow()
+            }
           </Animated.View>
-        ) : null}
+        )}
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  shadow: {
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1
-    },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
-    elevation: 3
-  },
   ball: {
-    position: "absolute",
-    alignItems: "center",
-    justifyContent: "center"
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   ballText: {
-    fontWeight: "900"
+    fontWeight: '700',
+    width: '100%',
+    textAlign: 'center'
   },
   container: {
-    overflow: "hidden"
+    overflow: 'hidden'
   },
   slider: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0
   },
   linearGradient: {
-    width: "100%",
-    height: "100%"
+    width: '100%',
+    height: '100%'
   }
 });
